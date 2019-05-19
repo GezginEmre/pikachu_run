@@ -6,4 +6,4 @@ Add to txt file:
 1 for roads,
 3 for enterance,
 4 for exit,
->1 for health pack
+Greater than 1 for health pack
