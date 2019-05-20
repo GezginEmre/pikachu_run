@@ -7,11 +7,10 @@
 
 class Node : public Vertex {
 	public:
-		int id = -1;
 		std::vector<bool> stepPoint;
 		int gameNumber = 0;
 		bool visited = false;
-		int direction = 0;
+		bool isFirstNode = false;
 		Node* pPreviousN = nullptr;
 		Node* pNextN = nullptr;
 		
@@ -19,8 +18,7 @@ class Node : public Vertex {
 		}
 		
 		Node(int x, int y, int rowCount, int columnCount, int type) :
-			Vertex(x, y, rowCount, columnCount, type),
-			id(x + y * columnCount)  {
+			Vertex(x + y * columnCount, x, y, rowCount, columnCount, type) {
 			}
 			
 		Node(Node* pNode) {
@@ -30,9 +28,6 @@ class Node : public Vertex {
 			columnCount = pNode->columnCount;
 			type = pNode->type;
 			id = pNode->id;
-			visited = pNode->visited;
-			pPreviousN = pNode->pPreviousN;
-			pNextN = pNode->pNextN;
 		}
 		
 		void GetMapType(Node* pNode) {
@@ -41,6 +36,7 @@ class Node : public Vertex {
 			
 		FirstNode(int gameNumber) {
 			visited = true;
+			isFirstNode = true;
 			this->gameNumber = gameNumber;
 			stepPoint.resize(1);
 			stepPoint[0] = true;

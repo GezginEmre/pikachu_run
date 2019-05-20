@@ -3,7 +3,6 @@
 #include <cstdlib>
 #include <string>
 #include <sstream>
-#include <stack>
 
 #include "vertex.h"
 #include "node.h"
@@ -12,7 +11,7 @@
 std::string fileName = "map.txt";
 int firstNodeNumber = 3;
 int lastNodeNumber = 4;
-int gameCount = 10;
+int gameIndex = 0;
 
 int** GetRawMap(std::string fileName, int& rowCount, int& columnCount) {
 	std::ifstream file;
@@ -139,9 +138,6 @@ int main(int argc, char** argv) {
 		return 0;
 	}
 	
-	Route* routes = new Route[gameCount];
-	Route* bestRoute;
-	
 	Node** map = new Node*[rowCount];
 		
 	for (int rowIndex = 0; rowIndex < rowCount; rowIndex++) {
@@ -152,25 +148,48 @@ int main(int argc, char** argv) {
 		}
 	}
 	
-	for (int gameIndex = 0; gameIndex < gameCount; gameIndex++) {
-		
-		routes[gameIndex].FindRoute(first, last, matrix, gameIndex);
-		
-		if (bestRoute == nullptr || routes[gameIndex].length < bestRoute->length)
-			bestRoute = &routes[gameIndex];
+	int routeCount = 0;
+	
+	Route firstRoute(++routeCount);
+	firstRoute.FindRoute(first, last, matrix, ++gameIndex);
+	Route bestRoute(-1);
+	bestRoute = firstRoute;
+	
+	bool isRepeated;
+	
+	do {		
+		for (int rowIndex = 0; rowIndex < rowCount; rowIndex++) {			
+			for (int columnIndex = 0; columnIndex < columnCount; columnIndex++) {
+				matrix[rowIndex][columnIndex]->GetMapType(&map[rowIndex][columnIndex]);
+			}
+		}
 			
-		if (gameIndex < gameCount)
-			for (int rowIndex = 0; rowIndex < rowCount; rowIndex++) {			
-				for (int columnIndex = 0; columnIndex < columnCount; columnIndex++) {
-					matrix[rowIndex][columnIndex]->GetMapType(&map[rowIndex][columnIndex]);
+		Route route(++routeCount);
+		route.FindRoute(first, last, matrix, ++gameIndex);
+		
+		if (firstRoute.vertexChainFiFo.size() == route.vertexChainFiFo.size())
+			for (int stepIndex = 0; stepIndex < firstRoute.vertexChainFiFo.size(); stepIndex++) {
+				if (firstRoute.vertexChainFiFo.at(stepIndex)->id == route.vertexChainFiFo.at(stepIndex)->id) {
+					isRepeated = true;
+				} else {
+					isRepeated = false;
+					break;
 				}
 			}
-	}
+		
+		if (route.health > 0 && route.length < bestRoute.length || 
+			(route.health > bestRoute.health && route.length == bestRoute.length)) 
+		{
+			bestRoute = route;
+		}
+	} while (!isRepeated);
 	
-	std::cout << std::endl << "En iyi rota: " << bestRoute->length << " adim." << std::endl;
+	std::cout << std::endl << routeCount << " adet rota denendi." << std::endl;
+	std::cout << "En iyi rota " << bestRoute.length << " adim ile " << bestRoute.id << ". rota oldu:" << std::endl;
 	
-	do {
-		Node* pCurrent = bestRoute->nodeChainFiFo.front();
+	for (int stepIndex = 0; stepIndex < bestRoute.vertexChainFiFo.size() - 1; stepIndex++) {
+		Vertex* pCurrent = bestRoute.vertexChainFiFo.at(stepIndex);
+		Vertex* pNext = bestRoute.vertexChainFiFo.at(stepIndex + 1);
 		std::cout << pCurrent->x << "-" << pCurrent->y;
 		
 		if (pCurrent->direction == 1)
@@ -182,10 +201,8 @@ int main(int argc, char** argv) {
 		if (pCurrent->direction == 4)
 			std::cout << " asagiya ";
 		
-		std::cout << pCurrent->pNextN->x << "-" << pCurrent->pNextN->y << std::endl;
-		
-		bestRoute->nodeChainFiFo.pop();
-	} while (bestRoute->nodeChainFiFo.size() > 1);
+		std::cout << pNext->x << "-" << pNext->y << std::endl;
+	}
 	
 	return 0;
 }
